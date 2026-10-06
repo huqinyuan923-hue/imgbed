@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PixNest · 私有图床</title>
+<meta name="description" content="Cloudflare Workers + R2 私有图床：粘贴/拖拽上传，内容寻址去重，直链外发。" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪺</text></svg>" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🪺</div>
+    <div>
+      <h1>PixNest <span class="dim">/ 私有图床</span></h1>
+      <p class="dim tagline">Cloudflare Workers + R2 · 粘贴即传 · 内容寻址去重 · 直链外发</p>
+    </div>
+    <button id="tokenBtn" class="ghost" title="设置访问令牌">🔑 令牌</button>
+  </header>
+
+  <section id="drop" class="card drop" tabindex="0" aria-label="上传区域">
+    <div class="dz-icon">📤</div>
+    <p class="dz-title"><b>拖拽 / 粘贴 (Ctrl+V) / 点击</b> 上传图片</p>
+    <p class="dim">png · jpg · webp · gif · svg · avif · 单张 ≤ 10MB · 相同图片自动去重</p>
+    <input id="file" type="file" multiple accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,image/avif" hidden />
+  </section>
+
+  <section id="progress" class="progress-list" hidden></section>
+  <section id="results" class="results"></section>
+
+  <section class="gallery-sec">
+    <h2>图库 <span id="sum" class="dim"></span></h2>
+    <div id="gallery" class="grid"></div>
+    <div class="more-wrap"><button id="more" class="ghost" hidden>加载更多</button></div>
+  </section>
+
+  <footer class="dim">
+    PixNest · 数据存于你自己的 Cloudflare R2 ·
+    <a href="https://github.com/huqinyuan923-hue/imgbed" target="_blank" rel="noopener">GitHub</a>
+  </footer>
+</div>
+
+<dialog id="tokenModal">
+  <form id="tokenForm">
+    <h3>🔑 访问令牌</h3>
+    <p class="dim">上传与图库管理需要令牌（即 Worker 的 <code>UPLOAD_TOKEN</code>），仅保存在本机浏览器。</p>
+    <input id="tokenInput" type="password" placeholder="粘贴访问令牌" autocomplete="off" />
+    <div class="row">
+      <button type="button" id="tokenCancel" class="ghost">取消</button>
+      <button type="submit" class="primary">保存</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

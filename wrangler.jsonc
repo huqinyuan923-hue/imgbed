@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "picnest",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-29",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "none"
+  },
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "picnest-images"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "img.adcakeyuan.top",
+      "custom_domain": true
+    }
+  ]
+}
