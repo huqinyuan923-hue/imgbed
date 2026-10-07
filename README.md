@@ -65,6 +65,7 @@ curl -H "Authorization: Bearer <token>" -F "file=@screenshot.png" https://img.ad
 
 - 单张 ≤ 10MB；类型白名单：png / jpg / webp / gif / svg / avif
 - KV 免费档：1GB 总量、每天 1000 次写入、10 万次读取——图库页显示累计体积，写满前注意清理
+- **KV 最终一致性**：删除某图后约 1 分钟内，边缘缓存可能仍短暂返回旧内容（再次调用删除接口即清理）；连续快速重复上传时 `deduped` 标记也可能漏报（key 相同会覆盖，不产生冗余）。均不影响正确性
 - 未配置 `UPLOAD_TOKEN` 时所有写操作返回 401（防误上线裸奔）
 - 删除后直链立即失效（同步清理缓存）；浏览器本地缓存可能残留
 - 令牌泄露：Pages 设置里改掉 `UPLOAD_TOKEN` 重新部署即可
