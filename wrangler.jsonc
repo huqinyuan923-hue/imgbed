@@ -8,10 +8,10 @@
     "binding": "ASSETS",
     "not_found_handling": "none"
   },
-  "r2_buckets": [
+  "kv_namespaces": [
     {
       "binding": "IMAGES",
-      "bucket_name": "picnest-images"
+      "id": "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
     }
   ],
   "routes": [

@@ -1,8 +1,8 @@
 import { Hono } from 'hono'
 
 export type Env = {
-  /** R2 存储桶（wrangler.jsonc 中绑定 picnest-images） */
-  IMAGES: R2Bucket
+  /** KV 命名空间（wrangler.jsonc 中绑定，存储图片二进制 + 元数据） */
+  IMAGES: KVNamespace
   /** 静态资源（public/ 目录） */
   ASSETS: Fetcher
   /** 上传/管理令牌（CF Secret，未设置时拒绝所有写操作） */
@@ -67,11 +67,16 @@ app.post('/api/upload', async (c) => {
   const hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 16)
   const key = `i/${hash}.${ext}`
 
-  const existing = await c.env.IMAGES.head(key)
-  if (!existing) {
+  // 去重检查：KV 无 head()，用同前缀 list 精确判断
+  const dup = await c.env.IMAGES.list({ prefix: key, limit: 1 })
+  if (!dup.keys.length) {
     await c.env.IMAGES.put(key, buf, {
-      httpMetadata: { contentType: file.type || 'application/octet-stream' },
-      customMetadata: { name: file.name || key },
+      metadata: {
+        name: (file.name || key).slice(0, 200),
+        size: file.size,
+        type: file.type || 'application/octet-stream',
+        uploaded: new Date().toISOString(),
+      },
     })
   }
 
@@ -83,7 +88,7 @@ app.post('/api/upload', async (c) => {
     markdown: `![](${url})`,
     html: `<img src="${url}" alt="" />`,
     size: file.size,
-    deduped: Boolean(existing),
+    deduped: dup.keys.length > 0,
   })
 })
 
@@ -94,14 +99,17 @@ app.get('/api/images', async (c) => {
   const origin = new URL(c.req.url).origin
   return c.json({
     success: true,
-    objects: list.objects.map((o) => ({
-      key: o.key.replace(/^i\//, ''),
-      name: o.customMetadata?.name || o.key,
-      size: o.size,
-      uploaded: o.uploaded.toISOString(),
-      url: `${origin}/${o.key}`,
-    })),
-    nextCursor: list.truncated && list.cursor ? list.cursor : null,
+    objects: list.keys.map((k) => {
+      const m = (k.metadata || {}) as { name?: string; size?: number; uploaded?: string }
+      return {
+        key: k.name.replace(/^i\//, ''),
+        name: m.name || k.name,
+        size: m.size || 0,
+        uploaded: m.uploaded || new Date(0).toISOString(),
+        url: `${origin}/${k.name}`,
+      }
+    }),
+    nextCursor: list.list_complete ? null : list.cursor || null,
   })
 })
 
@@ -112,23 +120,33 @@ app.delete('/api/images/:key', async (c) => {
     return c.json({ success: false, error: '非法 key' }, 400)
   }
   await c.env.IMAGES.delete(`i/${raw}`)
+  // 同步清理边缘缓存
+  await caches.default.delete(new URL(`i/${raw}`, c.req.url).toString())
   return c.json({ success: true })
 })
 
-// ---- 图片直链（公开，内容寻址不可变，一年强缓存）----
+// ---- 图片直链（公开；先查边缘缓存，再回源 KV，回源结果写入缓存）----
 app.get('i/:key', async (c) => {
   const raw = c.req.param('key')
   if (!KEY_PATTERN.test(raw)) {
     return c.json({ success: false, error: '非法 key' }, 400)
   }
-  const obj = await c.env.IMAGES.get(`i/${raw}`)
-  if (!obj) return c.json({ success: false, error: 'Not found' }, 404)
 
+  const cache = caches.default
+  const cached = await cache.match(c.req.raw)
+  if (cached) return cached
+
+  const data = await c.env.IMAGES.getWithMetadata(`i/${raw}`, { type: 'arrayBuffer' })
+  if (!data.value) return c.json({ success: false, error: 'Not found' }, 404)
+
+  const meta = (data.metadata || {}) as { type?: string; uploaded?: string }
   const headers = new Headers()
-  obj.writeHttpMetadata(headers)
-  headers.set('ETag', obj.httpEtag)
+  headers.set('Content-Type', meta.type || 'application/octet-stream')
   headers.set('Cache-Control', 'public, max-age=31536000, immutable')
-  return new Response(obj.body, { headers })
+  headers.set('ETag', `"${raw}"`)
+  const res = new Response(data.value, { headers })
+  if (meta.uploaded) c.executionCtx.waitUntil(cache.put(c.req.raw, res.clone()))
+  return res
 })
 
 // ---- 其余路径交给静态资源（/、/app.js、/styles.css）----
