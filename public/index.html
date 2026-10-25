@@ -7,8 +7,25 @@
 <meta name="description" content="Cloudflare Pages + KV 私有图床：粘贴/拖拽上传，内容寻址去重，直链外发。" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪺</text></svg>" />
 <link rel="stylesheet" href="styles.css" />
+<style>
+  /* 进站动画：相框成形（每会话一次） */
+  #boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#0e1117;font-family:system-ui,sans-serif;animation:pnOut .5s ease 1.7s forwards}
+  #boot .n-frame{width:120px;height:90px;border:2px solid #2dd4bf;border-radius:10px;display:grid;place-items:center;font-size:38px;animation:pnDraw .8s ease both}
+  #boot .n-logo{color:#5eead4;font-size:clamp(24px,5vw,40px);font-weight:800;animation:pnIn .5s ease .5s both}
+  #boot .n-sub{color:#94a3b8;font-size:13px;letter-spacing:.12em;opacity:0;animation:pnIn .35s ease 1s both}
+  @keyframes pnIn{from{opacity:0;transform:translateY(10px)}}
+  @keyframes pnDraw{from{opacity:0;transform:scale(.7) rotate(-4deg)}}
+  @keyframes pnOut{to{opacity:0;visibility:hidden;transform:scale(1.03)}}
+  @media (prefers-reduced-motion:reduce){#boot{display:none}}
+</style>
 </head>
 <body>
+<div id="boot" aria-hidden="true">
+  <div class="n-frame">🪺</div>
+  <div class="n-logo">PixNest</div>
+  <div class="n-sub">CONTENT-ADDRESSED · KV</div>
+</div>
+<script>try{if(sessionStorage.getItem('boot-seen')){var b=document.getElementById('boot');b&&(b.style.display='none')}else{sessionStorage.setItem('boot-seen','1')}}catch(e){}</script>
 <div class="wrap">
   <header>
     <div class="logo">🪺</div>
