@@ -9,21 +9,31 @@
 <link rel="stylesheet" href="styles.css" />
 <style>
   /* 进站动画：相框成形（每会话一次） */
-  #boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#0e1117;font-family:system-ui,sans-serif;animation:pnOut .5s ease 1.7s forwards}
-  #boot .n-frame{width:120px;height:90px;border:2px solid #2dd4bf;border-radius:10px;display:grid;place-items:center;font-size:38px;animation:pnDraw .8s ease both}
-  #boot .n-logo{color:#5eead4;font-size:clamp(24px,5vw,40px);font-weight:800;animation:pnIn .5s ease .5s both}
-  #boot .n-sub{color:#94a3b8;font-size:13px;letter-spacing:.12em;opacity:0;animation:pnIn .35s ease 1s both}
-  @keyframes pnIn{from{opacity:0;transform:translateY(10px)}}
-  @keyframes pnDraw{from{opacity:0;transform:scale(.7) rotate(-4deg)}}
-  @keyframes pnOut{to{opacity:0;visibility:hidden;transform:scale(1.03)}}
+  #boot{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:radial-gradient(ellipse 80% 55% at 50% 28%,rgba(45,212,191,.12),transparent),#0e1117;font-family:system-ui,sans-serif;animation:pnOut .5s cubic-bezier(.65,0,.35,1) 2.6s forwards}
+  #boot .n-frame{position:relative;width:min(200px,52vw);aspect-ratio:4/3;border:2px solid #2dd4bf;border-radius:12px;display:grid;place-items:center;overflow:hidden;box-shadow:0 0 30px rgba(45,212,191,.18),inset 0 0 24px rgba(45,212,191,.08);animation:pnDraw .7s cubic-bezier(.22,1,.36,1) both}
+  #boot .n-photo{position:absolute;inset:10px;border-radius:7px;display:grid;place-items:center;font-size:44px;background:linear-gradient(135deg,rgba(45,212,191,.22),rgba(59,130,246,.14) 55%,rgba(167,139,250,.12));opacity:0;animation:pnPhoto .6s ease .55s both}
+  #boot .n-hash{position:absolute;left:0;right:0;bottom:5px;text-align:center;font-family:ui-monospace,Consolas,monospace;font-size:9.5px;letter-spacing:.06em;color:#5eead4;opacity:0;animation:pnIn .3s ease 1.4s both}
+  #boot .n-logo{font-size:clamp(24px,5vw,40px);font-weight:800;letter-spacing:.02em;background:linear-gradient(100deg,#5eead4,#60a5fa 60%,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent;animation:pnIn .5s ease .45s both}
+  #boot .n-bar{width:min(250px,58vw);height:3px;border-radius:999px;overflow:hidden;background:rgba(45,212,191,.16);opacity:0;animation:pnIn .3s ease 1.15s both}
+  #boot .n-bar::before{content:'';display:block;height:100%;background:linear-gradient(90deg,#2dd4bf,#60a5fa);transform:scaleX(0);transform-origin:left;animation:pnFill 1.2s cubic-bezier(.3,0,.4,1) 1.25s forwards}
+  #boot .n-sub{color:#94a3b8;font-size:13px;letter-spacing:.12em;opacity:0;animation:pnIn .35s ease 1.65s both}
+  @keyframes pnIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes pnDraw{from{opacity:0;transform:scale(.82) rotate(-3deg)}to{opacity:1;transform:none}}
+  @keyframes pnPhoto{from{opacity:0;transform:scale(1.08);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+  @keyframes pnFill{to{transform:scaleX(1)}}
+  @keyframes pnOut{to{opacity:0;visibility:hidden;transform:scale(1.04)}}
   @media (prefers-reduced-motion:reduce){#boot{display:none}}
 </style>
 </head>
 <body>
 <div id="boot" aria-hidden="true">
-  <div class="n-frame">🪺</div>
+  <div class="n-frame">
+    <div class="n-photo">🏞️</div>
+    <span class="n-hash">sha256 · 6f1c9e2a…d4b7c0</span>
+  </div>
   <div class="n-logo">PixNest</div>
-  <div class="n-sub">CONTENT-ADDRESSED · KV</div>
+  <div class="n-bar"></div>
+  <div class="n-sub">CONTENT-ADDRESSED · IMMUTABLE · KV</div>
 </div>
 <script>try{if(sessionStorage.getItem('boot-seen')){var b=document.getElementById('boot');b&&(b.style.display='none')}else{sessionStorage.setItem('boot-seen','1')}}catch(e){}</script>
 <div class="wrap">
